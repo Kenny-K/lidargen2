@@ -64,8 +64,8 @@ def main():
 
     if (args.train):
         # Train the model...
-
-        os.system('python LiDARGen/main.py --ni --exp {exp} --config {cfg}'.format(
+        # w/o resume_training flag
+        os.system('python LiDARGen/main.py --resume_training --ni --exp {exp} --config {cfg}'.format(
             exp=str(args.exp), cfg=str(args.config)))
 
     if (args.sample):

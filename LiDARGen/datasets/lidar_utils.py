@@ -1,4 +1,4 @@
-
+import numba as nb
 import numpy as np
 
 
@@ -44,6 +44,54 @@ def point_cloud_to_range_image(point_cloud, isMatrix, return_remission = False, 
         return laser_scan.proj_range, laser_scan.proj_remission
     else:
         return laser_scan.proj_range
+
+def point_cloud_to_bev_image(point_cloud, isMatrix, 
+                             voxel_size, pcd_range, 
+                             return_remission = False, return_points=False):
+    if (isMatrix):
+        laser_scan = LaserScan()
+        laser_scan.set_points(point_cloud)
+    else:
+        laser_scan = LaserScan()
+        laser_scan.open_scan(point_cloud)
+
+    xyz = laser_scan.points
+    xyz = xyz.squeeze()
+    remission = laser_scan.remissions
+    remission = remission.squeeze()
+    
+    voxel_size = np.array(voxel_size, dtype=np.float32)
+    pcd_range = np.array(pcd_range, dtype=np.float32)
+    pcd_range_mask = (xyz[:, 0] > pcd_range[0]) & (xyz[:,1] > pcd_range[1]) \
+                    & (xyz[:, 2] > pcd_range[2]) & (xyz[:,0] < pcd_range[3]) \
+                    & (xyz[:,1] < pcd_range[4]) & (xyz[:,2] < pcd_range[5])
+    xyz = xyz[pcd_range_mask]
+    remission = remission[pcd_range_mask]
+    
+    grid_size = (pcd_range[3:] - pcd_range[:3]) / voxel_size
+    grid_size = np.around(grid_size).astype(np.int64)
+
+    grid_ind = np.around( (xyz[:,:2] - pcd_range[:2]) / voxel_size[:2]).astype(np.int64)
+    assert (grid_ind[:,0] <= grid_size[0]).any()
+    assert (grid_ind[:,1] <= grid_size[1]).any()
+    grid_size = grid_size[:2]
+    height_map = np.zeros(grid_size)
+    intensity_map = np.zeros(grid_size)
+    remission_map = np.zeros(grid_size)
+
+    return bev_painting(grid_ind, grid_size, xyz[:,2], remission, height_map, remission_map, intensity_map)
+
+@nb.jit(nopython=True)
+def bev_painting(grid_ind, grid_size, height, remission, height_map, remission_map, intensity_map):
+    for i in range(grid_size[0]):
+        for j in range(grid_size[1]):
+            ind_mask = (grid_ind[:,0] == i) & (grid_ind[:,1] == j)
+            num_pt = ind_mask.sum()
+            if num_pt > 0:
+                height_map[i][j] = np.amax(height[ind_mask])
+                remission_map[i][j] = np.amax(remission[ind_mask])
+                intensity_map[i][j] = num_pt
+    return height_map, remission_map, intensity_map
 
 
 '''

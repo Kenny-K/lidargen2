@@ -487,12 +487,15 @@ class NCSN_LiDAR_small(nn.Module):
         else:
             h = x
 
+        if h.dtype != torch.float32: h = h.float()
+
         b_size, n_channel, height, width = h.shape
         xs = torch.linspace(0, 1, steps=width)
         ys = torch.linspace(0, 1, steps=height)
         ys, xs = torch.meshgrid(ys, xs)
         xy = torch.stack((xs, ys), dim = 0)
         xy = xy.view((1, 2, height, width)).repeat((b_size, 1, 1, 1)).cuda()
+        assert h.dtype == xy.dtype
         h = torch.cat((h, xy), dim = 1)
 
         output = self.begin_conv(h)

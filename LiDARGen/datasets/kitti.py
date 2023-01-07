@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import os
 from glob import glob
-from .lidar_utils import point_cloud_to_range_image
+from .lidar_utils import point_cloud_to_range_image, point_cloud_to_bev_image
 
 class KITTI(Dataset):
 
@@ -51,3 +51,44 @@ class KITTI(Dataset):
 
         return real, 0
 
+
+class KITTI_BEV(Dataset):
+
+    def __init__(self, preprocess_path, config, split = 'train', transform=None):
+        self.transform = transform
+        self.return_remission = (config.data.channels == 2)
+        self.config = config
+
+        if os.path.exists(preprocess_path):
+            self.preprocess = True
+            if split == "train":
+                self.full_list = glob(preprocess_path + '/train/*.npy')
+            else:
+                self.full_list = glob(preprocess_path + "/test/*.npy")
+            self.full_list.sort(key=lambda x: int(x.split('/')[-1].rstrip('.npy').split('_')[-1]))
+        else:
+            self.preprocess = False
+            full_list = glob(os.path.join(os.environ.get('KITTI360_DATASET'), 'data_3d_raw/*/velodyne_points/data/*.bin'))
+            if split == "train":
+                self.full_list = list(filter(lambda file: '0000_sync' not in file and '0001_sync' not in file, full_list))
+            else:
+                self.full_list = list(filter(lambda file: '0000_sync' in file or '0001_sync' in file, full_list))
+
+    def __len__(self):
+        return len(self.full_list)
+
+    def __getitem__(self, index):
+        filename = self.full_list[index]
+        if self.preprocess:
+            data = np.load(filename).astype(np.float)
+            max_h = data.max(axis=(1,2),keepdims=True)
+            min_h = data.min(axis=(1,2),keepdims=True)
+            assert (max_h > min_h).all()
+            bev_map = (data - min_h) / (max_h - min_h)     # normalized to [0,1]
+        else:
+            height_map, remission_map, intensity_map = point_cloud_to_bev_image(filename, False, 
+                                                self.config.data.voxel_size, 
+                                                self.config.data.point_cloud_range)                                         
+            bev_map = np.stack([height_map, remission_map, intensity_map], axis=0)
+
+        return bev_map, 0

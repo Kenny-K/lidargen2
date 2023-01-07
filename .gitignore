@@ -1,0 +1,4 @@
+/train_bev
+/assets
+**/*.jpg
+**/test.ipynb

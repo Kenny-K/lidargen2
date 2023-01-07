@@ -3,7 +3,7 @@ import torch
 import torchvision.transforms as transforms
 from datasets.kitti360_im import KITTI360
 from datasets.lidar import LiDAR
-from datasets.kitti import KITTI
+from datasets.kitti import KITTI, KITTI_BEV
 from torch.utils.data import Subset
 import numpy as np
 
@@ -60,6 +60,10 @@ def get_dataset(args, config):
                                 transforms.CenterCrop((config.data.image_size, config.data.image_width)),
                                 transforms.ToTensor(),
                             ]))
+
+    elif config.data.dataset == "KITTI_BEV":
+        dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev',config=config, split="train")
+        test_dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev',config=config, split="test")
 
     return dataset, test_dataset
 
