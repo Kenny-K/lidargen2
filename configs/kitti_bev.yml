@@ -8,7 +8,7 @@ training:
   log_all_sigmas: false
 
 sampling:
-  batch_size: 4 # sampling batch size -- adjust based on your GPU memory
+  batch_size: 8 # sampling batch size -- adjust based on your GPU memory
   data_init: false # set it to be false during sampling, only use during debugging
   step_lr: 0.0000062 # do not change
   n_steps_each: 5 # do not change
