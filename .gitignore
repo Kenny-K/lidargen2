@@ -4,3 +4,5 @@
 **/test.ipynb
 /train_*
 **/__pycache__
+/configs
+test.py
