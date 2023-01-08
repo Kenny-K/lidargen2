@@ -1,5 +1,5 @@
 training:
-  batch_size: 3 # training stage batch size
+  batch_size: 4 # training stage batch size
   n_epochs: 500000
   n_iters: 300001
   snapshot_freq: 20000 # 5000
