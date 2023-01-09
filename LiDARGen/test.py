@@ -55,11 +55,19 @@ np.random.seed(args.seed)
 from datasets.kitti import KITTI_BEV
 os.environ['KITTI360_DATASET'] = '/sharedata/home/shared/jiangq/KITTI-360'
 # '/sharedata/home/jiangq/DATA/kitti360_bev'
-dataset = KITTI_BEV(preprocess_path=' ',config=new_config,split='test')
+dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev',config=new_config,split='train')
 print(len(dataset))
 from torch.utils.data import DataLoader
-dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=32)
+dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1)
 
 for i, data in enumerate(dataloader):
-    data = data.squeeze().numpy()
-    np.save("/sharedata/home/jiangq/DATA/kitti360_bev/test/bev_test_{}".format(i), data)
+    data = data[0].squeeze().numpy().transpose(1,2,0) * 255
+    print(data.max(axis=(0,1)),data.min(axis=(0,1)))
+    print(os.path.exists("image_results"))
+    print(cv2.imwrite("image_results/{}.jpg".format(i), data))
+    if i > 10: break
+
+
+# for i, data in enumerate(dataloader):
+#     data = data.squeeze().numpy()
+#     np.save("/sharedata/home/jiangq/DATA/kitti360_bev/test/bev_test_{}".format(i), data)

@@ -12,7 +12,7 @@ sampling:
   data_init: false # set it to be false during sampling, only use during debugging
   step_lr: 0.0000062 # do not change
   n_steps_each: 5 # do not change
-  ckpt_id: 100000 # checkpoint id
+  ckpt_id: 200000 # checkpoint id
   final_only: true # store the full difussion process or the final sample only; works only under non fid mode
   fid: false # batch sample large-scale data for FID evaluation
   denoise: true # final denoising step
