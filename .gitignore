@@ -4,6 +4,9 @@
 **/test.ipynb
 /train_*
 **/__pycache__
+*/__pycache__
 /configs
-test.py
+LiDARGen/test.py
+*/test.py
+LiDARGen/configs
 **/*.png
