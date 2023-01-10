@@ -53,7 +53,7 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
 from datasets.kitti import KITTI_BEV
-os.environ['KITTI360_DATASET'] = '/public/home/jiangqi2022/DATA/KITTI-360'
+os.environ['KITTI360_DATASET'] = '/sharedata/home/shared/jiangq/KITTI-360'
 # '/sharedata/home/jiangq/DATA/kitti360_bev'
 dataset = KITTI_BEV(preprocess_path=' ', normalize=True,config=new_config,split='train')
 print(len(dataset))
@@ -73,5 +73,5 @@ for i, (data,_) in enumerate(dataloader):
     # np.save("/sharedata/home/jiangq/DATA/kitti360_bev/test/bev_test_{}".format(i), data)
     print(data.min(axis=(1,2)), data.max(axis=(1,2)))
     img_array = data.transpose(1,2,0) * 255
-    print(cv2.imwrite("/public/home/jiangqi2022/DATA/kitti360_bev/sample_imgs/{}.jpg".format(i), img_array))
+    print(cv2.imwrite("/sharedata/home/jiangq/DATA/kitti360_bev/sample_imgs/{}.jpg".format(i), img_array))
     if i > 3: break
