@@ -5,7 +5,6 @@
 /train_*
 **/__pycache__
 */__pycache__
-/configs
 LiDARGen/test.py
 */test.py
 LiDARGen/configs
