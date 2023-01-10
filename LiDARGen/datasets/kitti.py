@@ -54,10 +54,11 @@ class KITTI(Dataset):
 
 class KITTI_BEV(Dataset):
 
-    def __init__(self, preprocess_path, config, split = 'train', transform=None):
+    def __init__(self, preprocess_path, config, normalize=False, split = 'train', transform=None):
         self.transform = transform
         self.return_remission = (config.data.channels == 2)
         self.config = config
+        self.normalize = normalize
 
         if os.path.exists(preprocess_path):
             self.preprocess = True
@@ -79,16 +80,20 @@ class KITTI_BEV(Dataset):
 
     def __getitem__(self, index):
         filename = self.full_list[index]
-        if self.preprocess:
+        if not self.preprocess:
+            height_map, remission_map, intensity_map = point_cloud_to_bev_image(filename, False, 
+                                                self.config.data.voxel_size, 
+                                                self.config.data.point_cloud_range)                                         
+            data = np.stack([height_map, remission_map, intensity_map], axis=0)
+        else:
             data = np.load(filename).astype(np.float)
+        
+        if self.normalize:
             max_h = data.max(axis=(1,2),keepdims=True)
             min_h = data.min(axis=(1,2),keepdims=True)
             assert (max_h > min_h).all()
             bev_map = (data - min_h) / (max_h - min_h)     # normalized to [0,1]
         else:
-            height_map, remission_map, intensity_map = point_cloud_to_bev_image(filename, False, 
-                                                self.config.data.voxel_size, 
-                                                self.config.data.point_cloud_range)                                         
-            bev_map = np.stack([height_map, remission_map, intensity_map], axis=0)
+            bev_map = data
 
         return bev_map, 0

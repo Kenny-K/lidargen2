@@ -78,8 +78,7 @@ def point_cloud_to_bev_image(point_cloud, isMatrix,
     height_map = np.zeros(grid_size)
     intensity_map = np.zeros(grid_size)
     remission_map = np.zeros(grid_size)
-    height_data = xyz[:,2] - xyz[:,2].min(axis=-1)[:,np.newaxis]
-
+    height_data = xyz[:,2] - xyz[:,2].min(axis=-1)
     return bev_painting(grid_ind, grid_size, height_data, remission, height_map, remission_map, intensity_map)
 
 @nb.jit(nopython=True)
