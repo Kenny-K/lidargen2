@@ -62,8 +62,8 @@ def get_dataset(args, config):
                             ]))
 
     elif config.data.dataset == "KITTI_BEV":
-        dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev',config=config, split="train")
-        test_dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev',config=config, split="test")
+        dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev/bev_{}'.format(config.data.image_size),config=config, split="train")
+        test_dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev/bev_{}'.format(config.data.image_size),config=config, split="test")
 
     return dataset, test_dataset
 

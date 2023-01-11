@@ -2,13 +2,13 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 export KITTI360_DATASET=/sharedata/home/shared/jiangq/KITTI-360
 
 export CONFIG=kitti_bev.yml
-export EXP_NAME=train_bev
+export EXP_NAME=train_bev_400
 
 # training
-# python lidargen.py --train --exp train_bev --config kitti_bev.yml
+python lidargen.py --train --exp ${EXP_NAME} --config ${CONFIG}
 
 # sampling 
-python lidargen.py --sample --exp ${EXP_NAME} --config ${CONFIG}
+# python lidargen.py --sample --exp ${EXP_NAME} --config ${CONFIG}
 # evaluate by FID
 # python lidargen.py --fid --exp train_lidargen --config kitti.yml
 
