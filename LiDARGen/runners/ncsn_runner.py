@@ -10,8 +10,9 @@ import os
 from torchvision.utils import make_grid, save_image
 from torch.utils.data import DataLoader
 from models.ncsnv2 import NCSNv2Deeper, NCSNv2, NCSNv2Deepest, NCSN_LiDAR, NCSN_LiDAR_small
+from models.ptPolar import ptPolar
 from models.ncsn import NCSN, NCSNdeeper
-from datasets import get_dataset, data_transform, inverse_data_transform
+from datasets import get_dataset, data_transform, inverse_data_transform, collate_fn_BEV
 from losses import get_optimizer
 from models import (anneal_Langevin_dynamics,
                     anneal_Langevin_dynamics_inpainting,
@@ -26,11 +27,26 @@ __all__ = ['NCSNRunner']
 def get_model(config):
     if config.data.dataset == 'CIFAR10' or config.data.dataset == 'CELEBA':
         return NCSNv2(config).to(config.device)
-    elif config.data.dataset == 'KITTI' or config.data.dataset == 'KITTI_BEV':
+    elif config.data.dataset == 'KITTI' or config.data.dataset == 'KITTI_BEV' or config.data.dataset == "KITTI_Polar":
         return NCSN_LiDAR_small(config).to(config.device)
     elif config.data.dataset == 'KITTI360':
         return NCSNv2Deepest(config).to(config.device)
-
+    
+def get_data_loader(config, dataset, test_dataset):
+    if not config.data.dataset == "KITTI_Polar":
+        dataloader = DataLoader(dataset, batch_size=config.training.batch_size, shuffle=True,
+                                num_workers=config.data.num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=config.training.batch_size, shuffle=True,
+                                 num_workers=config.data.num_workers, drop_last=True)
+    else:
+        dataloader = DataLoader(dataset, batch_size=config.training.batch_size, shuffle=True, collate_fn=collate_fn_BEV,
+                                num_workers=config.data.num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=config.training.batch_size, shuffle=True, collate_fn=collate_fn_BEV,
+                                 num_workers=config.data.num_workers, drop_last=True)
+        
+    return dataloader, test_loader
+        
+        
 class NCSNRunner():
     def __init__(self, args, config):
         self.args = args
@@ -40,10 +56,11 @@ class NCSNRunner():
 
     def train(self):
         dataset, test_dataset = get_dataset(self.args, self.config)
-        dataloader = DataLoader(dataset, batch_size=self.config.training.batch_size, shuffle=True,
-                                num_workers=self.config.data.num_workers)
-        test_loader = DataLoader(test_dataset, batch_size=self.config.training.batch_size, shuffle=True,
-                                 num_workers=self.config.data.num_workers, drop_last=True)
+        if self.config.data.dataset == "KITTI_Polar":
+            grid_size = (self.config.data.image_size, self.config.data.image_width, self.config.data.channels)
+            polar_voxelize_layer = ptPolar(grid_size=grid_size, fea_dim=self.config.data.channels)
+
+        dataloader, test_loader = get_data_loader(self.config, dataset, test_dataset)
         test_iter = iter(test_loader)
         self.config.input_dim = self.config.data.image_size * self.config.data.image_width * self.config.data.channels
 
@@ -115,13 +132,23 @@ class NCSNRunner():
             for i, (X, y) in enumerate(dataloader):
                 score.train()
                 step += 1
+                
+                if not self.config.data.dataset == "KITTI_Polar":
+                    X = X.to(self.config.device)
+                    X = data_transform(self.config, X)
+                    loss = anneal_dsm_score_estimation(score, X, sigmas, None,
+                                                    self.config.training.anneal_power,
+                                                    hook)
+                else:
+                    train_pt_fea_ten = [torch.from_numpy(i).type(torch.FloatTensor).to(self.config.device) for i in y]  # pt_fea
+                    train_grid_ten = [torch.from_numpy(i[:,:2]).to(self.config.device) for i in X] # grid_ind
+                    with torch.no_grad():
+                        X_bev = polar_voxelize_layer(train_pt_fea_ten, train_grid_ten)
+                    print(X_bev.shape)
+                    loss = anneal_dsm_score_estimation(score, X_bev, sigmas, None,
+                                                    self.config.training.anneal_power,
+                                                    hook)
 
-                X = X.to(self.config.device)
-                X = data_transform(self.config, X)
-
-                loss = anneal_dsm_score_estimation(score, X, sigmas, None,
-                                                   self.config.training.anneal_power,
-                                                   hook)
                 tb_logger.add_scalar('loss', loss, global_step=step)
                 tb_hook()
 

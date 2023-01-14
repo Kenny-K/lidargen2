@@ -9,3 +9,4 @@ LiDARGen/test.py
 */test.py
 LiDARGen/configs
 **/*.png
+run.sh

@@ -26,6 +26,15 @@ def load_matrices(kitti_path, data_name):
     return velo_to_pose, poses
 
 
+def read_raw_point_cloud(filename, return_remission):
+    laser_scan = LaserScan()
+    laser_scan.open_scan(filename)
+
+    if return_remission:
+        return laser_scan.points, laser_scan.remissions
+    else:
+        return laser_scan.points
+
 
 
 def point_cloud_to_range_image(point_cloud, isMatrix, return_remission = False, return_points=False):

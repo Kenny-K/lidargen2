@@ -3,7 +3,7 @@ import torch
 import torchvision.transforms as transforms
 from datasets.kitti360_im import KITTI360
 from datasets.lidar import LiDAR
-from datasets.kitti import KITTI, KITTI_BEV
+from datasets.kitti import KITTI, KITTI_BEV, collate_fn_BEV, KITTI_Polar
 from torch.utils.data import Subset
 import numpy as np
 
@@ -64,6 +64,10 @@ def get_dataset(args, config):
     elif config.data.dataset == "KITTI_BEV":
         dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev/bev_{}'.format(config.data.image_size), normalize=True, config=config, split="train")
         test_dataset = KITTI_BEV(preprocess_path='/sharedata/home/jiangq/DATA/kitti360_bev/bev_{}'.format(config.data.image_size), normalize=True, config=config, split="test")
+
+    elif config.data.dataset == "KITTI_Polar":
+        dataset = KITTI_Polar(config, split='train')
+        test_dataset = KITTI_Polar(config, split='test')
 
     return dataset, test_dataset
 
